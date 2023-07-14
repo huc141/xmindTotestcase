@@ -1,5 +1,5 @@
 # XMind2TestCase
-
+- 适配我司禅道模板
 > **XMind2TestCase** 工具，提供了一个高效测试用例设计的解决方案！
 
 
