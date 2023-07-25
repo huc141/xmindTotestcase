@@ -2,6 +2,7 @@
 # _*_ coding:utf-8 _*_
 import logging
 import sys
+from testcase2xmind.zentao2xmind import zentao_csv_file_to_xmind
 from xmind2testcase.zentao import xmind_to_zentao_csv_file
 from xmind2testcase.testlink import xmind_to_testlink_xml_file
 from xmind2testcase.utils import get_absolute_path, xmind_testcase_to_json_file
@@ -24,6 +25,7 @@ using_doc = """
      xmind2testcase /path/to/testcase.xmind -csv   => output testcase.csv
      xmind2testcase /path/to/testcase.xmind -xml   => output testcase.xml
      xmind2testcase /path/to/testcase.xmind -json  => output testcase.json
+     xmind2testcase /path/to/testcase.csv -xmind   => output testcase.xmind
      xmind2testcase webtool                        => launch the web testcase conversion tool locally: 127.0.0.1:5001
      xmind2testcase webtool 8000                   => launch the web testcase conversion tool locally: 127.0.0.1:8000
     """
@@ -64,6 +66,13 @@ def cli_main():
                 launch()
         else:
             launch()
+    elif len(sys.argv) > 1 and sys.argv[1].endswith('.csv'):
+        zentao_csv_file = sys.argv[1]
+        zentao_csv_file = get_absolute_path(zentao_csv_file)
+        logging.info('Start to convert zentao_csv file: %s', zentao_csv_file)
+        if len(sys.argv) == 3 and sys.argv[2] == '-xmind':
+            csv_to_xmind_file = zentao_csv_file_to_xmind(zentao_csv_file)
+            logging.info('Convert csv_to_xmind file to xmind file successfully: %s', csv_to_xmind_file)
 
     else:
         print(using_doc)

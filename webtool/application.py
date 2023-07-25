@@ -25,7 +25,7 @@ formatter = logging.Formatter('%(asctime)s  %(name)s  %(levelname)s  [%(module)s
 file_handler = logging.FileHandler(log_file, encoding='UTF-8')
 # 通过 setFormatter() 方法将前面创建的日志格式器 formatter 应用到文件处理器上
 file_handler.setFormatter(formatter)
-# 最后，通过 setLevel() 方法设置文件处理器的日志级别为 logging.DEBUG，表示输出所有DEBUG级别及以上的日志。
+# 最后，通过 setLevel() 方法设置文件处理器的日志级别为 logging.DEBUG，表示输出所有级别的日志，包括 DEBUG、INFO、WARNING、ERROR 和 CRITICAL 等级别的日志信息。
 file_handler.setLevel(logging.DEBUG)
 # 创建流处理器（stream handler）stream_handler：将日志消息输出到控制台。
 stream_handler = logging.StreamHandler()
@@ -35,7 +35,8 @@ stream_handler.setLevel(logging.INFO)
 # xmind to testcase logger
 # 创建根日志记录器（root logger），并添加文件处理器（file handler）和流处理器（stream handler）作为其处理器。然后，将根日志记录器的日志级别设置为 DEBUG。
 # 根日志记录器是日志记录器层次结构中的顶级记录器，它负责处理所有未被其他具体记录器处理的日志消息。通过获取根日志记录器并为其添加处理器，可以确保所有日志消息都会被处理和记录。
-# logging.getLogger() 获取了根日志记录器的实例。然后，使用 addHandler() 方法分别将文件处理器和流处理器添加到根日志记录器中，以便将日志消息同时输出到文件和控制台。最后，使用 setLevel() 方法将根日志记录器的日志级别设置为 DEBUG，表示该记录器将处理所有级别的日志消息。
+# logging.getLogger() 获取了根日志记录器的实例。然后，使用 addHandler() 方法分别将文件处理器和流处理器添加到根日志记录器中，以便将日志消息同时输出到文件和控制台。
+# 最后，使用 setLevel() 方法将根日志记录器的日志级别设置为 DEBUG，表示该记录器将处理所有级别的日志消息。
 root_logger = logging.getLogger()
 root_logger.addHandler(file_handler)
 root_logger.addHandler(stream_handler)
@@ -44,7 +45,7 @@ root_logger.setLevel(logging.DEBUG)
 # flask and werkzeug logger
 # 创建名为 'werkzeug' 的日志记录器，并将文件处理器和流处理器添加为其处理器
 # werkzeug' 是一个用于处理 Web 请求的 Python 库，常用于开发 Web 应用程序。在 Flask 应用程序中，'werkzeug' 用于处理 HTTP 请求和响应，并生成与请求处理相关的日志消息。
-# 的是将 'werkzeug' 的日志消息与应用程序的其他日志消息分开记录和处理。通过单独配置 'werkzeug' 日志记录器，可以更灵活地控制和过滤 'werkzeug' 相关的日志消息，以满足特定需求。
+# 目的是将 'werkzeug' 的日志消息与应用程序的其他日志消息分开记录和处理。通过单独配置 'werkzeug' 日志记录器，可以更灵活地控制和过滤 'werkzeug' 相关的日志消息，以满足特定需求。
 werkzeug_logger = logging.getLogger('werkzeug')
 werkzeug_logger.addHandler(file_handler)
 werkzeug_logger.addHandler(stream_handler)
@@ -128,6 +129,7 @@ def delete_record(filename, record_id):
     g.db.commit()
 
 
+# 用于清理服务器上的文件和将记录标记为已删除
 def delete_records(keep=20):
     """Clean up files on server and mark the record as deleted"""
     sql = "SELECT * from records where is_deleted<>1 ORDER BY id desc LIMIT -1 offset {}".format(keep)
@@ -224,34 +226,35 @@ def verify_uploaded_files(files):
     if g.invalid_files: # 检查全局变量 g.invalid_files 是否存在，即是否有无效的文件。
         g.error = "Invalid file: {}".format(','.join(g.invalid_files)) # 如果存在无效的文件，将错误信息设置为 "Invalid file: "，后面跟随逗号分隔的无效文件名列表。
 
+# Flask 应用的视图函数，用于处理用户访问根路径 / 的请求。
+@app.route('/', methods=['GET', 'POST'])  # 装饰器，用于将下面的函数 index() 注册为处理根路径 / 的请求。当用户访问根路径时，该函数会被调用来处理请求。methods=['GET', 'POST'] 表示该视图函数可以处理 GET 和 POST 方法的请求。
+def index(download_xml=None):  # 接受一个名为 download_xml 的可选参数。这个参数的默认值是 None，意味着如果没有传入该参数，它将使用默认值 None。
+    g.invalid_files = []  # 一个空列表，用于存储无效的文件名列表。
+    g.error = None # 为了初始化 g.error，它用于存储错误信息。在这里，将其设置为 None 表示暂时没有错误。
+    g.download_xml = download_xml # 这行代码将传入的参数 download_xml 赋值给 g.download_xml，将它保存在全局上下文中，以便在后续处理中使用。
+    g.filename = None # 将 g.filename 初始化为 None，表示暂时没有文件名。
 
-@app.route('/', methods=['GET', 'POST'])
-def index(download_xml=None):
-    g.invalid_files = []
-    g.error = None
-    g.download_xml = download_xml
-    g.filename = None
+    # request 是 Flask 应用中的一个全局对象，它代表了客户端发送的 HTTP 请求。method、files都是request对象的一个属性。
+    if request.method == 'POST': # 这是一个条件语句，检查当前请求的 HTTP 方法是否为 POST。
+        if 'file' not in request.files: # 这是一个条件语句，检查请求中是否包含名为 'file' 的文件。
+            return redirect(request.url) # 如果请求中没有上传文件，会重定向到当前 URL（即刷新页面）。
 
-    if request.method == 'POST':
-        if 'file' not in request.files:
+        file = request.files['file'] # 从请求中获取名为 'file' 的文件对象，并将其赋值给变量 file，以便后续使用。
+
+        if file.filename == '': # 这是一个条件语句，检查上传的文件名是否为空。如果文件名为空，也会重定向到当前 URL（即刷新页面）。
             return redirect(request.url)
 
-        file = request.files['file']
-
-        if file.filename == '':
-            return redirect(request.url)
-
-        g.filename = save_file(file)
-        verify_uploaded_files([file])
-        delete_records()
+        g.filename = save_file(file) # 调用了函数 save_file(file) 来保存上传的文件，并将返回的文件名赋值给 g.filename，以便后续使用。
+        verify_uploaded_files([file]) # 调用了函数 verify_uploaded_files([file]) 来验证上传的文件。
+        delete_records() # 是为了在文件上传后进行文件的清理，并将相应的记录标记为已删除，以保持服务器和数据库中的数据一致性，并防止不必要的文件积累。
 
     else:
-        g.upload_form = True
+        g.upload_form = True # 这个设置的目的是在模板中控制是否显示上传表单。在此例中，当 g.upload_form 为 True 时，表示要显示上传表单；当 g.upload_form 为 False 时，表示不显示上传表单。
 
-    if g.filename:
-        return redirect(url_for('preview_file', filename=g.filename))
+    if g.filename: # 检查 g.filename 是否存在（即是否成功保存了文件）。
+        return redirect(url_for('preview_file', filename=g.filename)) # 如果文件成功保存了，将重定向到名为 'preview_file' 的视图函数，并传入文件名作为参数。
     else:
-        return render_template('index.html', records=list(get_records()))
+        return render_template('index.html', records=list(get_records())) # 使用 render_template() 函数来渲染名为 'index.html' 的模板，并将 get_records() 函数返回的记录列表作为参数传入模板。这将在页面中显示上传的文件记录列表。
 
 
 @app.route('/uploads/<filename>')
