@@ -14,16 +14,16 @@ config = {'sep': ' ',
 
 def xmind_to_testsuites(xmind_content_dict):
     """convert xmind file to `xmind2testcase.metadata.TestSuite` list"""
-    suites = []
+    suites = [] # 创建一个空列表suites，用于存储将要生成的TestSuite对象。
 
-    for sheet in xmind_content_dict:
+    for sheet in xmind_content_dict: # sheet在这里代表xmind文件中的画布
         logging.debug('start to parse a sheet: %s', sheet['title'])
-        root_topic = sheet['topic']
-        sub_topics = root_topic.get('topics', [])
+        root_topic = sheet['topic'] # 从当前Sheet的字典中获取根Topic（根主题），根Topic是整个Sheet的顶层主题。
+        sub_topics = root_topic.get('topics', []) # 使用get()方法从根主题的字典中获取'topics'键对应的值（子主题列表）。如果'topics'键不存在或者没有值，即根主题没有子主题，get()方法将返回一个空列表[]，表示当前Sheet中没有包含任何测试用例信息。
 
-        if sub_topics:
-            root_topic['topics'] = filter_empty_or_ignore_topic(sub_topics)
-        else:
+        if sub_topics: # 检查sub_topics是否非空，即该Sheet是否包含测试用例信息。
+            root_topic['topics'] = filter_empty_or_ignore_topic(sub_topics) # 对子主题列表进行过滤和处理，去除空的主题或被忽略的主题。
+        else: # 如果sub_topics为空，即该Sheet没有包含测试用例信息，将记录一个警告信息到日志，并继续下一个Sheet的解析。
             logging.warning('This is a blank sheet(%s), should have at least 1 sub topic(test suite)', sheet['title'])
             continue
         suite = sheet_to_suite(root_topic)
@@ -59,11 +59,11 @@ def filter_empty_or_ignore_element(values):
 
 def sheet_to_suite(root_topic):
     """convert a xmind sheet to a `TestSuite` instance"""
-    suite = TestSuite()
-    root_title = root_topic['title']
-    separator = root_title[-1]
+    suite = TestSuite() # 创建一个空的TestSuite实例，并赋值给变量suite。
+    root_title = root_topic['title'] # 从root_topic中提取测试套件的名称，存储在变量root_title中。
+    separator = root_title[-1] # 获取root_title的最后一个字符，将其存储在变量separator中。
 
-    if separator in config['valid_sep']:
+    if separator in config['valid_sep']: # 判断separator是否存在于全局配置项config['valid_sep']中，即是否为一个有效的分隔符。
         logging.debug('find a valid separator for connecting testcase title: %s', separator)
         config['sep'] = separator  # set the separator for the testcase's title
         root_title = root_title[:-1]

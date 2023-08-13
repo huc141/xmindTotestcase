@@ -25,11 +25,12 @@ def get_absolute_path(path):
 def get_xmind_testsuites(xmind_file):
     """Load the XMind file and parse to `xmind2testcase.metadata.TestSuite` list"""
     xmind_file = get_absolute_path(xmind_file)
+    # 加载XMind文件并返回一个xmind2.xmind.Workbook对象。这个对象代表整个XMind工作簿
     workbook = xmind.load(xmind_file)
-    xmind_content_dict = workbook.getData()
+    xmind_content_dict = workbook.getData() # 从workbook对象中获取XMind文件的内容，以Python字典的形式表示。字典的结构对应了XMind文件的层次结构
     logging.debug("loading XMind file(%s) dict data: %s", xmind_file, xmind_content_dict)
 
-    if xmind_content_dict:
+    if xmind_content_dict: # 检查xmind_content_dict是否非空，即是否成功加载了XMind文件的内容。
         testsuites = xmind_to_testsuites(xmind_content_dict)
         return testsuites
     else:
