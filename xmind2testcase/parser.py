@@ -16,7 +16,7 @@ def xmind_to_testsuites(xmind_content_dict):
     """convert xmind file to `xmind2testcase.metadata.TestSuite` list"""
     suites = [] # 创建一个空列表suites，用于存储将要生成的TestSuite对象。
 
-    for sheet in xmind_content_dict: # sheet在这里代表xmind文件中的画布
+    for sheet in xmind_content_dict: # sheet在这里代表xmind文件中的画布，使用for循环遍历列表中的字典
         logging.debug('start to parse a sheet: %s', sheet['title'])
         root_topic = sheet['topic'] # 从当前Sheet的字典中获取根Topic（根主题），根Topic是整个Sheet的顶层主题。
         sub_topics = root_topic.get('topics', []) # 使用get()方法从根主题的字典中获取'topics'键对应的值（子主题列表）。如果'topics'键不存在或者没有值，即根主题没有子主题，get()方法将返回一个空列表[]，表示当前Sheet中没有包含任何测试用例信息。
@@ -24,12 +24,12 @@ def xmind_to_testsuites(xmind_content_dict):
         if sub_topics: # 检查sub_topics是否非空，即该Sheet是否包含测试用例信息。
             root_topic['topics'] = filter_empty_or_ignore_topic(sub_topics) # 对子主题列表进行过滤和处理，去除空的主题或被忽略的主题。
         else: # 如果sub_topics为空，即该Sheet没有包含测试用例信息，将记录一个警告信息到日志，并继续下一个Sheet的解析。
-            logging.warning('This is a blank sheet(%s), should have at least 1 sub topic(test suite)', sheet['title'])
+            logging.debug('This is a blank sheet(%s), should have at least 1 sub topic(test suite)', sheet['title'])
             continue
-        suite = sheet_to_suite(root_topic)
+        suite = sheet_to_suite(root_topic) # 将当前画布的根主题数据转换为测试套件对象
         # suite.sheet_name = sheet['title']  # root testsuite has a sheet_name attribute
         logging.debug('sheet(%s) parsing complete: %s', sheet['title'], suite.to_dict())
-        suites.append(suite)
+        suites.append(suite) # 将转换得到的测试套件对象添加到suites列表中
 
     return suites
 
@@ -60,18 +60,18 @@ def filter_empty_or_ignore_element(values):
 def sheet_to_suite(root_topic):
     """convert a xmind sheet to a `TestSuite` instance"""
     suite = TestSuite() # 创建一个空的TestSuite实例，并赋值给变量suite。
-    root_title = root_topic['title'] # 从root_topic中提取测试套件的名称，存储在变量root_title中。
+    root_title = root_topic['title'] # 从root_topic中提取根主题的名称，存储在变量root_title中。
     separator = root_title[-1] # 获取root_title的最后一个字符，将其存储在变量separator中。
 
     if separator in config['valid_sep']: # 判断separator是否存在于全局配置项config['valid_sep']中，即是否为一个有效的分隔符。
         logging.debug('find a valid separator for connecting testcase title: %s', separator)
         config['sep'] = separator  # set the separator for the testcase's title
-        root_title = root_title[:-1]
+        root_title = root_title[:-1] # 如果是有效的分隔符，则从测试套件的名称root_title中去掉分隔符
     else:
-        config['sep'] = ' '
+        config['sep'] = ' ' # 如果separator不是有效的分隔符，则将全局配置项config['sep']设置为默认值' '（空格）
 
-    suite.name = root_title
-    suite.details = root_topic['note']
+    suite.name = root_title # 将经过处理的测试套件名称root_title赋值给suite的name属性。
+    suite.details = root_topic['note'] # 将root_topic中的测试套件详细信息赋值给suite的details属性。
     suite.sub_suites = []
 
     for suite_dict in root_topic['topics']:
@@ -177,10 +177,10 @@ def get_execution_type(topics):
 
 def get_priority(case_dict):
     """Get the topic's priority（equivalent to the importance of the testcase)"""
-    if isinstance(case_dict['markers'], list):
-        for marker in case_dict['markers']:
-            if marker.startswith('priority'):
-                return int(marker[-1])
+    if isinstance(case_dict['markers'], list): # 检查测试用例数据字典中的 'markers' 是否是一个列表。
+        for marker in case_dict['markers']: # 如果 'markers' 是一个列表，就遍历其中的每个标记。
+            if marker.startswith('priority'): # 检查标记是否以 'priority' 开头，这是一个表示优先级的标记。
+                return int(marker[-1]) # 如果找到优先级相关的标记，将标记的最后一个字符（通常是优先级的数值）转换为整数并返回。
 
 
 def gen_testcase_title(topics):
