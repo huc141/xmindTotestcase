@@ -36,16 +36,17 @@ def xmind_to_testsuites(xmind_content_dict):
 
 def filter_empty_or_ignore_topic(topics):
     """filter blank or start with config.ignore_char topic"""
-    result = [topic for topic in topics if not(
-            topic['title'] is None or
-            topic['title'].strip() == '' or
-            topic['title'][0] in config['ignore_char'])]
+    # result = [...]：这是将新列表的结果存储在名为 result 的变量中。
+    result = [topic for topic in topics if not(  # [topic for topic in topics]：这部分是一个列表解析，它遍历名为 topics 的列表中的每个元素（在这种情况下，每个元素都是一个主题），然后将它们包含在新的列表中。第一个topic：这是一个占位符变量，它代表在遍历 topics 列表时的每个元素。for topic in topics：这是一个循环语句，它遍历名为 topics 的列表中的每个元素，并将每个元素依次赋给占位符变量 topic。
+            topic['title'] is None or # 这部分检查主题的标题是否为 None（表示没有标题）。
+            topic['title'].strip() == '' or # 这部分检查主题的标题是否是空字符串，通过使用 .strip() 方法来删除标题中的额外空格并检查是否为空。
+            topic['title'][0] in config['ignore_char'])] # 这部分检查主题的标题是否以 config 中定义的字符列表中的任何字符开头，这样的主题会被忽略。
 
-    for topic in result:
+    for topic in result: #函数递归地处理 topics 列表中的子主题（sub_topics）。这是因为主题可以包含子主题。过滤之后，将有效的主题添加到 result 中
         sub_topics = topic.get('topics', [])
         topic['topics'] = filter_empty_or_ignore_topic(sub_topics)
 
-    return result
+    return result # 最终，返回包含有效主题的 result 列表。
 
 
 def filter_empty_or_ignore_element(values):
@@ -59,7 +60,7 @@ def filter_empty_or_ignore_element(values):
 
 def sheet_to_suite(root_topic):
     """convert a xmind sheet to a `TestSuite` instance"""
-    suite = TestSuite() # 创建一个空的TestSuite实例，并赋值给变量suite。
+    suite = TestSuite() # 创建一个空的TestSuite对象，并赋值给变量suite。
     root_title = root_topic['title'] # 从root_topic中提取根主题的名称，存储在变量root_title中。
     separator = root_title[-1] # 获取root_title的最后一个字符，将其存储在变量separator中。
 
@@ -74,6 +75,7 @@ def sheet_to_suite(root_topic):
     suite.details = root_topic['note'] # 将root_topic中的测试套件详细信息赋值给suite的details属性。
     suite.sub_suites = []
 
+    # 使用递归调用函数 parse_testsuite 来处理 root_topic['topics'] 中的每个字典元素，并将其转换为对应的子测试套件对象，并添加到 suite.sub_suites 列表中。
     for suite_dict in root_topic['topics']:
         suite.sub_suites.append(parse_testsuite(suite_dict))
 
