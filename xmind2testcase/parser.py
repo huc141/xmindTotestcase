@@ -48,6 +48,25 @@ def filter_empty_or_ignore_topic(topics):
 
     return result # 最终，返回包含有效主题的 result 列表。
 
+# 上述filter_empty_or_ignore_topic方法可以改写为更易懂的传统方法：
+def filter_empty_or_ignore_topic2(topics):
+    """过滤空白或以config.ignore_char开头的主题"""
+    result = []
+
+    for topic in topics:
+        if (
+            topic['title'] is not None
+            and topic['title'].strip() != ''
+            or topic['title'][0] not in config['ignore_char']
+        ):
+            result.append(topic)
+
+    for topic in result:
+        sub_topics = topic.get('topics', [])
+        topic['topics'] = filter_empty_or_ignore_topic(sub_topics)
+
+    return result
+
 
 def filter_empty_or_ignore_element(values):
     """Filter all empty or ignore XMind elements, especially notes、comments、labels element"""
